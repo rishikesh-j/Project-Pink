@@ -26,8 +26,12 @@ def run_nuclei(target_file, output_dir, rate_limit, threads):
 
 def save_to_mongo(target_file, output_file):
     collection = get_mongo_collection()
+    seen_lines = set()
     with open(output_file, 'r') as file:
         for line in file:
+            if line in seen_lines:
+                continue
+            seen_lines.add(line)
             parts = line.strip().split(' ')
             if len(parts) >= 4:
                 vulnerability = parts[0].strip('[]')
@@ -35,10 +39,8 @@ def save_to_mongo(target_file, output_file):
                 severity = parts[2].strip('[]')
                 url = parts[3]
                 description = ' '.join(parts[4:]).strip('[]') if len(parts) > 4 else ''
-                collection.insert_one({
-                    "vulnerability": vulnerability,
-                    "type": vuln_type,
-                    "severity": severity,
-                    "url": url,
-                    "description": description
-                })
+                collection.update_one(
+                    {"vulnerability": vulnerability, "type": vuln_type, "severity": severity, "url": url},
+                    {"$set": {"description": description}},
+                    upsert=True
+                )
