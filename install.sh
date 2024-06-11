@@ -3,7 +3,7 @@
 # Function to install Go
 install_go() {
   echo "[*] Installing Go..."
-  bash <(curl -sL https://git.io/go-installer) &> /dev/null
+  bash <(curl -sL https://git.io/go-installer)
 }
 
 # Function to install Subfinder
