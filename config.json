@@ -1,0 +1,5 @@
+{
+    "subfinder_threads": 10,
+    "nuclei_rate_limit": 20,
+    "nuclei_threads": 5
+}
