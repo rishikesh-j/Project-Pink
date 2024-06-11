@@ -10,16 +10,13 @@ def create_output_directory():
 
 def process_domain(domain, output_dir, subfinder_threads, nuclei_rate_limit, nuclei_threads):
     print(f"Running Subdomain Enumeration for {domain}...")
-    amass_output = sub_enum.run_amass(domain, output_dir)
     subfinder_output = sub_enum.run_subfinder(domain, output_dir, subfinder_threads)
-    print(f"Amass results saved to {amass_output}")
     print(f"Subfinder results saved to {subfinder_output}")
 
     combined_subdomains_file = os.path.join(output_dir, f"{domain}_all_subdomains.txt")
     with open(combined_subdomains_file, 'w') as outfile:
-        for fname in [amass_output, subfinder_output]:
-            with open(fname) as infile:
-                outfile.write(infile.read())
+        with open(subfinder_output) as infile:
+            outfile.write(infile.read())
     print(f"Combined subdomains saved to {combined_subdomains_file}")
 
     print(f"Running Vulnerability Scanning for subdomains in {combined_subdomains_file}...")
