@@ -4,6 +4,7 @@
 install_go() {
   echo "[*] Installing Go..."
   bash <(curl -sL https://git.io/go-installer)
+  source /root/.bashrc
 }
 
 # Function to install Subfinder
