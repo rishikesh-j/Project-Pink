@@ -1,5 +1,7 @@
 {
     "subfinder_threads": 10,
     "nuclei_rate_limit": 20,
-    "nuclei_threads": 5
+    "nuclei_threads": 5,
+    "httpx_threads": 50,
+    "httpx_rate_limit": 150
 }
