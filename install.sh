@@ -1,16 +1,10 @@
 #!/bin/bash
 
-# Function to install Go
-install_go() {
-    echo "Installing Go..."
-    curl -sL https://git.io/go-installer | bash
-}
-
-# Function to source .bashrc
-source_bashrc() {
-    echo "Sourcing /root/.bashrc..."
-    source /root/.bashrc
-}
+# Check if Go is installed
+if ! command -v go &> /dev/null; then
+    echo "Go is not installed. Please install Go and run this script again."
+    exit 1
+fi
 
 # Function to install subfinder
 install_subfinder() {
@@ -107,15 +101,6 @@ clone_additional_templates() {
 # Main installation function
 install_tools() {
     echo "Starting installation of tools..."
-
-    # Check if Go is installed, and install it if not
-    if ! command -v go &> /dev/null; then
-        install_go
-        echo "Go installed. Please run the script again to complete the installation."
-        exit 0
-    else
-        source_bashrc
-    fi
 
     # Install tools
     install_subfinder
