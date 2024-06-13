@@ -3,8 +3,7 @@
 # Function to install Go
 install_go() {
     echo "Installing Go..."
-    curl -sL https://git.io/go-installer | bash
-    source_bashrc
+    bash <(curl -sL https://git.io/go-installer)
 }
 
 # Function to source .bashrc
@@ -117,6 +116,7 @@ install_tools() {
     fi
 
     # Install tools
+    source_bashrc
     install_subfinder
     install_httpx
     install_nuclei
