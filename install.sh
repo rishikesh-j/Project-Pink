@@ -39,7 +39,7 @@ install_gotator() {
 # Function to install amass
 install_amass() {
     echo "Installing amass..."
-    GO111MODULE=on go install github.com/OWASP/Amass/v3/...@master &> /dev/null
+    GO111MODULE=on go install github.com/owasp-amass/amass/v4/...@master &> /dev/null
 }
 
 # Function to clone additional nuclei template repositories
