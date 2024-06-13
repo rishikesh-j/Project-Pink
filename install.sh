@@ -3,7 +3,7 @@
 # Function to install Go
 install_go() {
     echo "Installing Go..."
-    bash <(curl -sL https://git.io/go-installer)
+    curl -sL https://git.io/go-installer | bash
 }
 
 # Function to source .bashrc
@@ -111,12 +111,13 @@ install_tools() {
     # Check if Go is installed, and install it if not
     if ! command -v go &> /dev/null; then
         install_go
+        echo "Go installed. Please run the script again to complete the installation."
+        exit 0
     else
         source_bashrc
     fi
 
     # Install tools
-    source_bashrc
     install_subfinder
     install_httpx
     install_nuclei
