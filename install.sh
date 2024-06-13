@@ -4,6 +4,12 @@
 install_go() {
     echo "Installing Go..."
     curl -sL https://git.io/go-installer | bash
+    source_bashrc
+}
+
+# Function to source .bashrc
+source_bashrc() {
+    echo "Sourcing /root/.bashrc..."
     source /root/.bashrc
 }
 
@@ -106,6 +112,8 @@ install_tools() {
     # Check if Go is installed, and install it if not
     if ! command -v go &> /dev/null; then
         install_go
+    else
+        source_bashrc
     fi
 
     # Install tools
