@@ -16,29 +16,29 @@ def process_domain(domain, organization, output_dir, config):
     httpx_rate_limit = config['httpx_rate_limit']
 
     print(f"Running Subdomain Enumeration for {domain}...")
-#    subfinder_output = sub_enum.run_subfinder(domain, output_dir, subfinder_threads)
-#    print(f"Subfinder results saved to {subfinder_output}")
+    subfinder_output = sub_enum.run_subfinder(domain, output_dir, subfinder_threads)
+    print(f"Subfinder results saved to {subfinder_output}")
 
-#    combined_subdomains_file = sub_enum.combine_results(domain, output_dir, subfinder_output)
-#    print(f"Combined subdomains saved to {combined_subdomains_file}")
+    combined_subdomains_file = sub_enum.combine_results(domain, output_dir, subfinder_output)
+    print(f"Combined subdomains saved to {combined_subdomains_file}")
 
-#    print(f"Running Gotator for {domain}...")
-#    gotator_output = sub_enum.run_gotator(domain, combined_subdomains_file, output_dir)
-#    print(f"Gotator results saved to {gotator_output}")
+    print(f"Running Gotator for {domain}...")
+    gotator_output = sub_enum.run_gotator(domain, combined_subdomains_file, output_dir)
+    print(f"Gotator results saved to {gotator_output}")
 
-#    final_subdomains_file = os.path.join(output_dir, f"{domain}_final_subdomains.txt")
-#    with open(final_subdomains_file, 'w') as outfile:
-#        with open(combined_subdomains_file) as infile:
-#            outfile.write(infile.read())
-#        with open(gotator_output) as infile:
-#            outfile.write(infile.read())
-#    print(f"Final subdomains file saved to {final_subdomains_file}")
+    final_subdomains_file = os.path.join(output_dir, f"{domain}_final_subdomains.txt")
+    with open(final_subdomains_file, 'w') as outfile:
+        with open(combined_subdomains_file) as infile:
+            outfile.write(infile.read())
+        with open(gotator_output) as infile:
+            outfile.write(infile.read())
+    print(f"Final subdomains file saved to {final_subdomains_file}")
 
-#    sub_enum.save_to_mongo(domain, final_subdomains_file, collection="subdomains")
+    sub_enum.save_to_mongo(domain, final_subdomains_file, collection="subdomains")
 
-#    print(f"Running Subdomain Verification for {domain}...")
-#    httpx_output = sub_enum.run_httpx(domain, final_subdomains_file, output_dir, httpx_threads, httpx_rate_limit)
-#    print(f"Httpx verified results saved to {httpx_output}")
+    print(f"Running Subdomain Verification for {domain}...")
+    httpx_output = sub_enum.run_httpx(domain, final_subdomains_file, output_dir, httpx_threads, httpx_rate_limit)
+    print(f"Httpx verified results saved to {httpx_output}")
 
     print(f"Running Shodan Dorking for organization {organization}...")
     shodan_module.search_shodan(organization, output_dir)
