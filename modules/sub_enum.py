@@ -15,15 +15,16 @@ def run_subfinder(domain, output_dir, threads):
     subprocess.run(['subfinder', '-d', domain, '-o', output_file, '-t', str(threads)], check=True)
     return output_file
 
-def run_amass(domain, output_dir):
-    output_file = os.path.join(output_dir, f"{domain}_amass.txt")
-    subprocess.run(['amass', 'enum', '-d', domain, '-o', output_file], check=True)
-    return output_file
+# Commented out the amass function
+# def run_amass(domain, output_dir):
+#     output_file = os.path.join(output_dir, f"{domain}_amass.txt")
+#     subprocess.run(['amass', 'enum', '-d', domain, '-o', output_file], check=True)
+#     return output_file
 
-def combine_results(domain, output_dir, subfinder_output, amass_output):
+def combine_results(domain, output_dir, subfinder_output):
     combined_output_file = os.path.join(output_dir, f"{domain}_all_subdomains.txt")
     with open(combined_output_file, 'w') as outfile:
-        for fname in [subfinder_output, amass_output]:
+        for fname in [subfinder_output]:
             with open(fname) as infile:
                 outfile.write(infile.read())
     return combined_output_file
