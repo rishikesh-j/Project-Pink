@@ -1,4 +1,3 @@
-xdm1yvm!drv2pbf_GJXimport os
 import json
 import argparse
 from modules import sub_enum, vuln_scan, shodan_module, phishing, postman_leaks, github_leaks
