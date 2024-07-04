@@ -4,10 +4,6 @@ import fileinput
 import json
 import pymongo
 
-SHODAN_API_KEY = "rZkzrPr7vQYHI9V3oMS0uUTJNsEgimmo"
-
-api = shodan.Shodan(SHODAN_API_KEY)
-
 def get_mongo_collection():
     client = pymongo.MongoClient("mongodb://localhost:27017/")
     db = client["recon"]
@@ -26,8 +22,23 @@ def sanitize_document(document):
         for item in document:
             sanitize_document(item)
 
-def search_shodan(organization, output_dir):
-    replace_org = "${target}"  # Replace part in dork file for organization.
+def filter_fields(result):
+    """ Filter required fields from the result """
+    filtered_result = {
+        "data": result.get("data"),
+        "org": result.get("org"),
+        "isp": result.get("isp"),
+        "ip_str": result.get("ip_str"),
+        "location": result.get("location"),
+        "http": result.get("http"),
+        "port": result.get("port"),
+        "status": "Open"
+    }
+    return filtered_result
+
+def search_shodan(organization, output_dir, shodan_api_key):
+    api = shodan.Shodan(shodan_api_key)
+    replace_org = "${organization}"  # Replace part in dork file for organization.
 
     with open(r'dorks.txt', 'r') as file:  # dorks.txt is the file which has all dorks.
         dorks = file.read()
@@ -42,17 +53,30 @@ def search_shodan(organization, output_dir):
         name = line.split("::")[0]
         dork = line.split("::")[1].strip()
         print(f"Using dork: {dork}")  # Print the dork being used
-        shodan_count = api.count(dork)
-        print(f'Dorking for {name} = {shodan_count}')
-        shodan_search = api.search(dork)
 
-        result = {
-            "organization": organization,
-            "dork": dork,
-            "name": name,
-            "shodan_count": shodan_count,
-            "results": shodan_search['matches']
-        }
+        try:
+            print(f"Searching Shodan with dork: {dork}, page: 1")
+            shodan_search = api.search(dork, page=1)
+            total_results = shodan_search['matches']
+            print(f"Page 1 results: {len(shodan_search['matches'])} matches")
+        except shodan.APIError as e:
+            print(f"Shodan API error: {e}")
+            total_results = []
 
-        sanitize_document(result)
-        collection.insert_one(result)
+        shodan_count = len(total_results)
+        print(f'Dorking for {name} = {shodan_count} total results')
+
+        for result in total_results:
+            filtered_result = filter_fields(result)
+            result_data = {
+                "organization": organization,
+                "dork": dork,
+                "name": name,
+                "shodan_count": shodan_count,
+                **filtered_result
+            }
+
+            # Sanitize and save to MongoDB
+            sanitize_document(result_data)
+            collection.insert_one(result_data)
+            print(f"Result for {filtered_result['ip_str']} saved to MongoDB")
