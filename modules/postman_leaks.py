@@ -1,6 +1,7 @@
-import subprocess
+import os
 import re
 import pymongo
+from datetime import datetime
 
 def get_mongo_collection():
     client = pymongo.MongoClient("mongodb://localhost:27017/")
@@ -8,56 +9,54 @@ def get_mongo_collection():
     collection = db["postman_leaks"]
     return collection
 
-def run_porch_pirate(domain, output_file):
-    command = f'porch-pirate -s {domain} | grep -oP "(Author: .*|Workspace: .*|Name: .*)" > {output_file}'
-    result = subprocess.run(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-    if result.returncode != 0:
-        print(f"Error running porch-pirate: {result.stderr}")
-    return result.returncode
-
-def parse_porch_pirate_output(output_file):
-    leaks = []
-    with open(output_file, 'r') as file:
+def parse_pirate_output(file_path):
+    with open(file_path, 'r') as file:
         content = file.read()
-        # Remove ANSI color codes
-        ansi_escape = re.compile(r'\x1B[@-_][0-?]*[ -/]*[@-~]')
-        content = ansi_escape.sub('', content)
-        regex = re.compile(r'Author: (.*?)\nWorkspace: (.*?)\nName: (.*?)\n', re.DOTALL)
-        matches = regex.findall(content)
-        for match in matches:
-            author = match[0]
-            workspace_id = match[1]
-            name = match[2]
-            url = f"https://www.postman.com/_api/workspace/{workspace_id}"
-            leaks.append({
-                "author": author,
-                "workspace_id": workspace_id,
-                "name": name,
-                "url": url,
-                "status": "Open"
-            })
+
+    parsed_data = re.findall(r"Author:\s*(.*?)\s*Workspace:\s*(.*?)\s*Name:\s*(.*?)\s", content, re.DOTALL)
+
+    leaks = []
+    for author, workspace, name in parsed_data:
+        leak = {
+            "author": author,
+            "workspace": workspace,
+            "name": name,
+            "status": "Open",
+            "url": f"https://www.postman.com/_api/workspace/{workspace}",
+            "date_found": datetime.now().isoformat()
+        }
+        leaks.append(leak)
+
     return leaks
 
-def save_to_mongo(domain, leaks):
+def save_to_mongo(leaks):
     collection = get_mongo_collection()
     for leak in leaks:
-        existing_entry = collection.find_one({"url": leak["url"]})
-        if existing_entry:
-            print(f"Updating existing entry: {leak['url']}")
-            collection.update_one({"_id": existing_entry["_id"]}, {"$set": leak})
-        else:
-            print(f"Inserting new entry: {leak['url']}")
-            leak["domain"] = domain
+        existing_leak = collection.find_one({
+            "author": leak['author'],
+            "workspace": leak['workspace'],
+            "name": leak['name'],
+            "url": leak['url']
+        })
+        if not existing_leak:
             collection.insert_one(leak)
+        else:
+            collection.update_one(
+                {"_id": existing_leak["_id"]},
+                {"$setOnInsert": leak},
+                upsert=True
+            )
 
-def postman_leaks(domain):
-    output_file = "porch_pirate_output.txt"
-    if run_porch_pirate(domain, output_file) == 0:
-        leaks = parse_porch_pirate_output(output_file)
-        save_to_mongo(domain, leaks)
+def postman_leaks(domain, output_dir):
+    output_file = os.path.join(output_dir, f"pirate_output_{domain}.txt")
+    os.makedirs(output_dir, exist_ok=True)
+    command = f"porch-pirate -s {domain} | grep -E '(Author:|Workspace:|Name:)' | sed -r 's/\\x1B\\[[0-9;]*[mG]//g' > {output_file}"
+    os.system(command)
+
+    leaks = parse_pirate_output(output_file)
+    if leaks:
+        print(f"Parsed leaks: {leaks}")
+        save_to_mongo(leaks)
+        print("Postman leaks results saved to the database")
     else:
-        print("Failed to run porch-pirate.")
-
-if __name__ == "__main__":
-    domain = "example.com"
-    postman_leaks(domain)
+        print("No leaks found")
