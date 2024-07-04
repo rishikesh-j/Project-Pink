@@ -65,6 +65,6 @@ def save_to_mongo(target_file, output_file):
                 print(f"Saving to DB: {vulnerability}, {vuln_type}, {severity}, {url}, {description}")  # Debug statement
                 collection.update_one(
                     {"vulnerability": vulnerability, "type": vuln_type, "severity": severity, "url": url},
-                    {"$set": {"description": description}},
+                    {"$set": {"description": description, "status": "Open"}},
                     upsert=True
                 )
