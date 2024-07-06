@@ -31,7 +31,8 @@ def parse_trufflehog_output(file_path):
     for match in matches:
         leak = match.groupdict()
         leak['status'] = 'Open'
-        leak['date_found'] = datetime.now().isoformat()
+        leak['date_found'] = datetime.now().strftime("%d-%m-%Y")
+        leak['age'] = 'new'
         leaks.append(leak)
 
     return leaks
@@ -50,14 +51,13 @@ def save_to_mongo(leaks):
             "repository": leak['repository'],
             "timestamp": leak['timestamp'],
         })
-        if not existing_leak:
-            collection.insert_one(leak)
-        else:
+        if existing_leak:
             collection.update_one(
                 {"_id": existing_leak["_id"]},
-                {"$setOnInsert": leak},
-                upsert=True
+                {"$set": {"status": existing_leak.get("status", "Open"), "age": ""}}
             )
+        else:
+            collection.insert_one(leak)
 
 def github_leaks(github_org):
     output_file = "trufflehog_output.txt"
