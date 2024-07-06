@@ -3,6 +3,7 @@ import os
 import fileinput
 import json
 import pymongo
+from datetime import datetime
 
 def get_mongo_collection():
     client = pymongo.MongoClient("mongodb://localhost:27017/")
@@ -78,5 +79,43 @@ def search_shodan(organization, output_dir, shodan_api_key):
 
             # Sanitize and save to MongoDB
             sanitize_document(result_data)
-            collection.insert_one(result_data)
-            print(f"Result for {filtered_result['ip_str']} saved to MongoDB")
+
+            existing_entry = collection.find_one({
+                "organization": organization,
+                "dork": dork,
+                "name": name,
+                "ip_str": filtered_result['ip_str']
+            })
+            
+            date_found = datetime.now().strftime("%d-%m-%Y")
+
+            if existing_entry:
+                print(f"Updating existing entry in DB: {filtered_result['ip_str']}")
+                collection.update_one(
+                    {
+                        "organization": organization,
+                        "dork": dork,
+                        "name": name,
+                        "ip_str": filtered_result['ip_str']
+                    },
+                    {"$set": {
+                        "data": filtered_result["data"],
+                        "org": filtered_result["org"],
+                        "isp": filtered_result["isp"],
+                        "location": filtered_result["location"],
+                        "http": filtered_result["http"],
+                        "port": filtered_result["port"],
+                        "status": existing_entry.get("status", "Open"),
+                        "age": ""
+                    }}
+                )
+            else:
+                print(f"Saving new entry to DB: {filtered_result['ip_str']}")
+                result_data.update({
+                    "date_found": date_found,
+                    "age": "new"
+                })
+                collection.insert_one(result_data)
+
+if __name__ == "__main__":
+    search_shodan("OrganizationName", "output_dir", "your_shodan_api_key")
