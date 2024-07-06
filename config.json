@@ -3,5 +3,6 @@
     "nuclei_rate_limit": 200,
     "nuclei_threads": 50,
     "httpx_threads": 100,
-    "httpx_rate_limit": 200
+    "httpx_rate_limit": 200,
+    "shodan_api_key": "APIKey"
 }
