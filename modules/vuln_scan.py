@@ -1,6 +1,7 @@
 import subprocess
 import os
 import pymongo
+from datetime import datetime
 
 def get_mongo_collection():
     client = pymongo.MongoClient("mongodb://localhost:27017/")
@@ -62,9 +63,29 @@ def save_to_mongo(target_file, output_file):
                 severity = parts[2].strip('[]')
                 url = parts[3]
                 description = parts[4].strip('[]') if len(parts) > 4 else ''
-                print(f"Saving to DB: {vulnerability}, {vuln_type}, {severity}, {url}, {description}")  # Debug statement
-                collection.update_one(
-                    {"vulnerability": vulnerability, "type": vuln_type, "severity": severity, "url": url},
-                    {"$set": {"description": description, "status": "Open"}},
-                    upsert=True
-                )
+                date_found = datetime.now().strftime("%d-%m-%Y")
+
+                existing_entry = collection.find_one({"vulnerability": vulnerability, "type": vuln_type, "severity": severity, "url": url})
+                
+                if existing_entry:
+                    print(f"Updating existing entry in DB: {vulnerability}, {vuln_type}, {severity}, {url}, {description}")
+                    collection.update_one(
+                        {"vulnerability": vulnerability, "type": vuln_type, "severity": severity, "url": url},
+                        {"$set": {
+                            "description": description,
+                            "status": existing_entry.get("status", "Open"),
+                            "age": ""
+                        }}
+                    )
+                else:
+                    print(f"Saving new entry to DB: {vulnerability, vuln_type, severity, url, description}")
+                    collection.insert_one({
+                        "vulnerability": vulnerability,
+                        "type": vuln_type,
+                        "severity": severity,
+                        "url": url,
+                        "description": description,
+                        "status": "Open",
+                        "date_found": date_found,
+                        "age": "new"
+                    })
