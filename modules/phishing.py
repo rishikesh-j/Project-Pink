@@ -2,6 +2,7 @@ import subprocess
 import os
 import re
 import pymongo
+from datetime import datetime
 
 def get_mongo_collection():
     client = pymongo.MongoClient("mongodb://localhost:27017/")
@@ -44,8 +45,23 @@ def parse_dnstwist_output(output_file):
 def save_to_mongo(domain, results):
     collection = get_mongo_collection()
     for result in results:
-        result["domain"] = domain
-        collection.insert_one(result)
+        existing_result = collection.find_one({
+            "domain": domain,
+            "type": result["type"],
+            "phishing_domain": result["phishing_domain"],
+            "details": result["details"]
+        })
+        if existing_result:
+            collection.update_one(
+                {"_id": existing_result["_id"]},
+                {"$set": {"status": existing_result.get("status", "Open"), "age": ""}}
+            )
+        else:
+            result["domain"] = domain
+            result["date_found"] = datetime.now().strftime("%d-%m-%Y")
+            result["age"] = "new"
+            result["status"] = "Open"
+            collection.insert_one(result)
 
 def phishing_scan(domain, output_dir):
     print(f"Running DNSTwist for {domain}...")
