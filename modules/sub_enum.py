@@ -2,6 +2,7 @@ import subprocess
 import os
 import re
 import pymongo
+from datetime import datetime
 
 def get_mongo_collection():
     client = pymongo.MongoClient("mongodb://localhost:27017/")
@@ -14,12 +15,6 @@ def run_subfinder(domain, output_dir, threads):
     output_file = os.path.join(output_dir, f"{domain}_subfinder.txt")
     subprocess.run(['subfinder', '-d', domain, '-o', output_file, '-t', str(threads)], check=True)
     return output_file
-
-# Commented out the amass function
-# def run_amass(domain, output_dir):
-#     output_file = os.path.join(output_dir, f"{domain}_amass.txt")
-#     subprocess.run(['amass', 'enum', '-d', domain, '-o', output_file], check=True)
-#     return output_file
 
 def combine_results(domain, output_dir, subfinder_output):
     combined_output_file = os.path.join(output_dir, f"{domain}_all_subdomains.txt")
@@ -76,14 +71,27 @@ def save_to_mongo(domain, output_file, collection):
                 subdomain = parts[0]
                 status_code = parts[1].strip('[]')
                 tech = parts[2].strip('[]')
+                date_found = datetime.now().strftime("%d-%m-%Y")
 
-                print(f"Saving to DB: {subdomain}, {status_code}, {tech}")  # Debug statement
-
-                collection.update_one(
-                    {"domain": domain, "subdomain": subdomain},
-                    {"$set": {
+                existing_entry = collection.find_one({"domain": domain, "subdomain": subdomain})
+                
+                if existing_entry:
+                    print(f"Updating existing entry in DB: {subdomain}, {status_code}, {tech}")
+                    collection.update_one(
+                        {"domain": domain, "subdomain": subdomain},
+                        {"$set": {
+                            "status_code": status_code,
+                            "tech": tech,
+                            "age": ""
+                        }}
+                    )
+                else:
+                    print(f"Saving new entry to DB: {subdomain}, {status_code}, {tech}")
+                    collection.insert_one({
+                        "domain": domain,
+                        "subdomain": subdomain,
                         "status_code": status_code,
-                        "tech": tech
-                    }},
-                    upsert=True
-                )
+                        "tech": tech,
+                        "date_found": date_found,
+                        "age": "new"
+                    })
