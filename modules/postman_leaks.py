@@ -23,7 +23,7 @@ def parse_pirate_output(file_path):
             "name": name,
             "status": "Open",
             "url": f"https://www.postman.com/_api/workspace/{workspace}",
-            "date_found": datetime.now().isoformat()
+            "date_found": datetime.now().strftime("%d-%m-%Y")
         }
         leaks.append(leak)
 
@@ -38,14 +38,14 @@ def save_to_mongo(leaks):
             "name": leak['name'],
             "url": leak['url']
         })
-        if not existing_leak:
-            collection.insert_one(leak)
-        else:
+        if existing_leak:
             collection.update_one(
                 {"_id": existing_leak["_id"]},
-                {"$setOnInsert": leak},
-                upsert=True
+                {"$set": {"status": existing_leak.get("status", "Open"), "age": ""}}
             )
+        else:
+            leak["age"] = "new"
+            collection.insert_one(leak)
 
 def postman_leaks(domain, output_dir):
     output_file = os.path.join(output_dir, f"pirate_output_{domain}.txt")
