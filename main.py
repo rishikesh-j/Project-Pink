@@ -58,7 +58,7 @@ def process_domain(domain, organization, output_dir, config, github_org=None):
 
     if github_org:
         print(f"Running GitHub Leaks Scan for organization {github_org}...")
-        github_leaks.github_leaks(github_org)
+        github_leaks.github_leaks(github_org, output_dir)
         print(f"GitHub leaks results saved to the database")
 
     print(f"Running Vulnerability Scanning for subdomains in {httpx_output}...")
