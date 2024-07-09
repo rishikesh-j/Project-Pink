@@ -71,27 +71,22 @@ def save_to_mongo(domain, output_file, collection):
                 subdomain = parts[0]
                 status_code = parts[1].strip('[]')
                 tech = parts[2].strip('[]')
-                date_found = datetime.now().strftime("%d-%m-%Y")
-
-                existing_entry = collection.find_one({"domain": domain, "subdomain": subdomain})
                 
+                existing_entry = collection.find_one({"domain": domain, "subdomain": subdomain})
                 if existing_entry:
-                    print(f"Updating existing entry in DB: {subdomain}, {status_code}, {tech}")
+                    new_age = existing_entry.get("age", "")
+                    if new_age == "new":
+                        new_age = ""
                     collection.update_one(
-                        {"domain": domain, "subdomain": subdomain},
-                        {"$set": {
-                            "status_code": status_code,
-                            "tech": tech,
-                            "age": ""
-                        }}
+                        {"_id": existing_entry["_id"]},
+                        {"$set": {"status_code": status_code, "tech": tech, "age": new_age}}
                     )
                 else:
-                    print(f"Saving new entry to DB: {subdomain}, {status_code}, {tech}")
                     collection.insert_one({
                         "domain": domain,
                         "subdomain": subdomain,
                         "status_code": status_code,
                         "tech": tech,
-                        "date_found": date_found,
+                        "date_found": datetime.now().strftime("%d-%m-%Y"),
                         "age": "new"
                     })

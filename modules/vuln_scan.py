@@ -63,22 +63,22 @@ def save_to_mongo(target_file, output_file):
                 severity = parts[2].strip('[]')
                 url = parts[3]
                 description = parts[4].strip('[]') if len(parts) > 4 else ''
-                date_found = datetime.now().strftime("%d-%m-%Y")
-
-                existing_entry = collection.find_one({"vulnerability": vulnerability, "type": vuln_type, "severity": severity, "url": url})
                 
+                existing_entry = collection.find_one({
+                    "vulnerability": vulnerability,
+                    "type": vuln_type,
+                    "severity": severity,
+                    "url": url
+                })
                 if existing_entry:
-                    print(f"Updating existing entry in DB: {vulnerability}, {vuln_type}, {severity}, {url}, {description}")
+                    age = existing_entry.get("age", "")
+                    if age == "new":
+                        age = ""
                     collection.update_one(
-                        {"vulnerability": vulnerability, "type": vuln_type, "severity": severity, "url": url},
-                        {"$set": {
-                            "description": description,
-                            "status": existing_entry.get("status", "Open"),
-                            "age": ""
-                        }}
+                        {"_id": existing_entry["_id"]},
+                        {"$set": {"description": description, "age": age}}
                     )
                 else:
-                    print(f"Saving new entry to DB: {vulnerability, vuln_type, severity, url, description}")
                     collection.insert_one({
                         "vulnerability": vulnerability,
                         "type": vuln_type,
@@ -86,6 +86,7 @@ def save_to_mongo(target_file, output_file):
                         "url": url,
                         "description": description,
                         "status": "Open",
-                        "date_found": date_found,
+                        "date_found": datetime.now().strftime("%d-%m-%Y"),
                         "age": "new"
                     })
+

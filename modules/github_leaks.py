@@ -1,3 +1,5 @@
+# github_leaks.py
+
 import os
 import re
 import pymongo
@@ -31,8 +33,7 @@ def parse_trufflehog_output(file_path):
     for match in matches:
         leak = match.groupdict()
         leak['status'] = 'Open'
-        leak['date_found'] = datetime.now().strftime("%d-%m-%Y")
-        leak['age'] = 'new'
+        leak['date_found'] = datetime.now().strftime("%d-%m-%y")
         leaks.append(leak)
 
     return leaks
@@ -51,16 +52,26 @@ def save_to_mongo(leaks):
             "repository": leak['repository'],
             "timestamp": leak['timestamp'],
         })
-        if existing_leak:
+        if not existing_leak:
+            leak["age"] = "new"
+            collection.insert_one(leak)
+            print(f"New result for {leak['repository']} saved to MongoDB")
+        else:
+            age_value = existing_leak.get("age", "")
+            if age_value == "new":
+                age_value = ""
             collection.update_one(
                 {"_id": existing_leak["_id"]},
-                {"$set": {"status": existing_leak.get("status", "Open"), "age": ""}}
+                {"$set": {
+                    "status": leak["status"],
+                    "age": age_value
+                }},
+                upsert=True
             )
-        else:
-            collection.insert_one(leak)
+            print(f"Updated result for {leak['repository']} in MongoDB")
 
-def github_leaks(github_org):
-    output_file = "trufflehog_output.txt"
+def github_leaks(github_org, output_dir):
+    output_file = os.path.join(output_dir, "trufflehog_output.txt")
     command = f"trufflehog github --org={github_org} | grep -E \"(Detector Type:|Decoder Type:|Raw result:|Commit:|Email:|File:|Line:|Repository:|Timestamp:)\" | sed -r 's/\\x1B\\[[0-9;]*[mG]//g' > {output_file}"
     os.system(command)
 
@@ -73,5 +84,12 @@ def github_leaks(github_org):
         print("No leaks found")
 
 if __name__ == "__main__":
-    github_org = "PhonePe"  # Example organization name
-    github_leaks(github_org)
+    config_file_path = 'config.json'
+    with open(config_file_path) as config_file:
+        config = json.load(config_file)
+
+    github_org = "example_org"  # Example GitHub organization
+    output_dir = os.path.join(os.getcwd(), "Recon")
+    os.makedirs(output_dir, exist_ok=True)
+
+    github_leaks(github_org, output_dir)

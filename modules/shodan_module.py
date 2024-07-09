@@ -74,48 +74,49 @@ def search_shodan(organization, output_dir, shodan_api_key):
                 "dork": dork,
                 "name": name,
                 "shodan_count": shodan_count,
+                "date_found": datetime.now().strftime("%d-%m-%y"),
                 **filtered_result
             }
-
-            # Sanitize and save to MongoDB
-            sanitize_document(result_data)
 
             existing_entry = collection.find_one({
                 "organization": organization,
                 "dork": dork,
                 "name": name,
-                "ip_str": filtered_result['ip_str']
+                "ip_str": result_data["ip_str"]
             })
-            
-            date_found = datetime.now().strftime("%d-%m-%Y")
 
-            if existing_entry:
-                print(f"Updating existing entry in DB: {filtered_result['ip_str']}")
-                collection.update_one(
-                    {
-                        "organization": organization,
-                        "dork": dork,
-                        "name": name,
-                        "ip_str": filtered_result['ip_str']
-                    },
-                    {"$set": {
-                        "data": filtered_result["data"],
-                        "org": filtered_result["org"],
-                        "isp": filtered_result["isp"],
-                        "location": filtered_result["location"],
-                        "http": filtered_result["http"],
-                        "port": filtered_result["port"],
-                        "status": existing_entry.get("status", "Open"),
-                        "age": ""
-                    }}
-                )
-            else:
-                print(f"Saving new entry to DB: {filtered_result['ip_str']}")
-                result_data.update({
-                    "date_found": date_found,
-                    "age": "new"
-                })
+            if not existing_entry:
+                result_data["age"] = "new"
+                sanitize_document(result_data)
                 collection.insert_one(result_data)
+                print(f"New result for {filtered_result['ip_str']} saved to MongoDB")
+            else:
+                age_value = existing_entry.get("age", "")
+                if age_value == "new":
+                    age_value = ""
+                collection.update_one(
+                    {"_id": existing_entry["_id"]},
+                    {"$set": {
+                        "data": result_data["data"],
+                        "org": result_data["org"],
+                        "isp": result_data["isp"],
+                        "location": result_data["location"],
+                        "http": result_data["http"],
+                        "port": result_data["port"],
+                        "status": result_data["status"],
+                        "age": age_value
+                    }},
+                    upsert=True
+                )
+                print(f"Updated result for {filtered_result['ip_str']} in MongoDB")
 
 if __name__ == "__main__":
-    search_shodan("OrganizationName", "output_dir", "your_shodan_api_key")
+    config_file_path = 'config.json'
+    with open(config_file_path) as config_file:
+        config = json.load(config_file)
+    
+    organization = "Nykaa"  # Example organization name
+    output_dir = os.path.join(os.getcwd(), "Recon")
+    shodan_api_key = config["shodan_api_key"]
+    
+    search_shodan(organization, output_dir, shodan_api_key)

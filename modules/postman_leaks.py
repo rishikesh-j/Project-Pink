@@ -23,7 +23,7 @@ def parse_pirate_output(file_path):
             "name": name,
             "status": "Open",
             "url": f"https://www.postman.com/_api/workspace/{workspace}",
-            "date_found": datetime.now().strftime("%d-%m-%Y")
+            "date_found": datetime.now().strftime("%d-%m-%y")
         }
         leaks.append(leak)
 
@@ -38,14 +38,23 @@ def save_to_mongo(leaks):
             "name": leak['name'],
             "url": leak['url']
         })
-        if existing_leak:
-            collection.update_one(
-                {"_id": existing_leak["_id"]},
-                {"$set": {"status": existing_leak.get("status", "Open"), "age": ""}}
-            )
-        else:
+        if not existing_leak:
             leak["age"] = "new"
             collection.insert_one(leak)
+            print(f"New result for {leak['name']} saved to MongoDB")
+        else:
+            age_value = existing_leak.get("age", "")
+            if age_value == "new":
+                age_value = ""
+            collection.update_one(
+                {"_id": existing_leak["_id"]},
+                {"$set": {
+                    "status": leak["status"],
+                    "age": age_value
+                }},
+                upsert=True
+            )
+            print(f"Updated result for {leak['name']} in MongoDB")
 
 def postman_leaks(domain, output_dir):
     output_file = os.path.join(output_dir, f"pirate_output_{domain}.txt")
@@ -60,3 +69,13 @@ def postman_leaks(domain, output_dir):
         print("Postman leaks results saved to the database")
     else:
         print("No leaks found")
+
+if __name__ == "__main__":
+    config_file_path = 'config.json'
+    with open(config_file_path) as config_file:
+        config = json.load(config_file)
+
+    domain = "example.com"  # Example domain
+    output_dir = os.path.join(os.getcwd(), "Recon")
+
+    postman_leaks(domain, output_dir)

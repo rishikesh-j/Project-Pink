@@ -38,30 +38,39 @@ def parse_dnstwist_output(output_file):
             results.append({
                 "type": entry_type,
                 "phishing_domain": phishing_domain,
-                "details": domain_details
+                "details": domain_details,
+                "status": "Open",
+                "date_found": datetime.now().strftime("%d-%m-%y")
             })
     return results
 
 def save_to_mongo(domain, results):
     collection = get_mongo_collection()
     for result in results:
-        existing_result = collection.find_one({
+        result["domain"] = domain
+        existing_entry = collection.find_one({
             "domain": domain,
-            "type": result["type"],
             "phishing_domain": result["phishing_domain"],
-            "details": result["details"]
+            "type": result["type"]
         })
-        if existing_result:
-            collection.update_one(
-                {"_id": existing_result["_id"]},
-                {"$set": {"status": existing_result.get("status", "Open"), "age": ""}}
-            )
-        else:
-            result["domain"] = domain
-            result["date_found"] = datetime.now().strftime("%d-%m-%Y")
+        if not existing_entry:
             result["age"] = "new"
-            result["status"] = "Open"
             collection.insert_one(result)
+            print(f"New result for {result['phishing_domain']} saved to MongoDB")
+        else:
+            age_value = existing_entry.get("age", "")
+            if age_value == "new":
+                age_value = ""
+            collection.update_one(
+                {"_id": existing_entry["_id"]},
+                {"$set": {
+                    "details": result["details"],
+                    "status": result["status"],
+                    "age": age_value
+                }},
+                upsert=True
+            )
+            print(f"Updated result for {result['phishing_domain']} in MongoDB")
 
 def phishing_scan(domain, output_dir):
     print(f"Running DNSTwist for {domain}...")
@@ -75,3 +84,13 @@ def phishing_scan(domain, output_dir):
     print(f"Saving DNSTwist results to MongoDB for {domain}...")
     save_to_mongo(domain, results)
     print(f"DNSTwist results saved to MongoDB")
+
+if __name__ == "__main__":
+    config_file_path = 'config.json'
+    with open(config_file_path) as config_file:
+        config = json.load(config_file)
+
+    domain = "example.com"  # Example domain
+    output_dir = os.path.join(os.getcwd(), "Recon")
+
+    phishing_scan(domain, output_dir)
