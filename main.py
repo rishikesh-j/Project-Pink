@@ -1,9 +1,8 @@
-# main.py
-
 import os
 import json
 import argparse
-from modules import sub_enum, vuln_scan, shodan_module, phishing, postman_leaks, github_leaks
+from datetime import datetime
+from modules import sub_enum, vuln_scan, shodan_module, phishing, postman_leaks, github_leaks, network_scan
 
 def create_output_directory():
     output_dir = os.path.join(os.getcwd(), "Recon")
@@ -17,12 +16,12 @@ def process_domain(domain, organization, output_dir, config, github_org=None):
     httpx_threads = config['httpx_threads']
     httpx_rate_limit = config['httpx_rate_limit']
     shodan_api_key = config['shodan_api_key']
+    dnsx_threads = config['dnsx_threads']
 
     print(f"Running Subdomain Enumeration for {domain}...")
     subfinder_output = sub_enum.run_subfinder(domain, output_dir, subfinder_threads)
     print(f"Subfinder results saved to {subfinder_output}")
 
-    # Combine results without amass_output
     combined_subdomains_file = sub_enum.combine_results(domain, output_dir, subfinder_output)
     print(f"Combined subdomains saved to {combined_subdomains_file}")
 
@@ -60,6 +59,10 @@ def process_domain(domain, organization, output_dir, config, github_org=None):
         print(f"Running GitHub Leaks Scan for organization {github_org}...")
         github_leaks.github_leaks(github_org, output_dir)
         print(f"GitHub leaks results saved to the database")
+
+    print(f"Running Network Scan for {domain}...")
+    network_scan.network_scan(domain, output_dir, config)
+    print(f"Network scan results saved to the database")
 
     print(f"Running Vulnerability Scanning for subdomains in {httpx_output}...")
     vuln_scan.run_nuclei(httpx_output, output_dir, nuclei_rate_limit, nuclei_threads)
