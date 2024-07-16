@@ -1,8 +1,10 @@
 import subprocess
 import os
 import re
+import json
 import pymongo
 from datetime import datetime
+import xml.etree.ElementTree as ET
 
 def get_mongo_collection():
     client = pymongo.MongoClient("mongodb://localhost:27017/")
@@ -57,25 +59,38 @@ def run_nmap(input_file, ports, output_dir):
 
 def parse_nmap_output(nmap_output_file):
     results = []
-    with open(nmap_output_file, 'r') as file:
-        content = file.read()
-        matches = re.findall(
-            r'<host .*?>.*?<address addr="(.*?)" addrtype="ipv4"/>.*?<port protocol="(.*?)" portid="(.*?)".*?<state state="(.*?)".*?<service name="(.*?)" product="(.*?)".*?</host>',
-            content, re.DOTALL
-        )
-        for match in matches:
+    tree = ET.parse(nmap_output_file)
+    root = tree.getroot()
+
+    for host in root.findall('host'):
+        ip_address = host.find('address').attrib['addr']
+        for port in host.findall('ports/port'):
+            protocol = port.attrib['protocol']
+            portid = port.attrib['portid']
+            state = port.find('state').attrib['state']
+            service = port.find('service')
+            service_name = service.attrib.get('name', '')
+            product = service.attrib.get('product', '')
+
             results.append({
-                "ip_address": match[0],
-                "protocol": match[1],
-                "port": match[2],
-                "state": match[3],
-                "service_name": match[4],
-                "product": match[5],
+                "ip_address": ip_address,
+                "protocol": protocol,
+                "port": portid,
+                "state": state,
+                "service_name": service_name,
+                "product": product,
                 "date_found": datetime.now().strftime("%d-%m-%y"),
-                "age": "new"
+                "age": "new",
+                "status": "Open"  # Default status
             })
-    
+
     return results
+
+def save_results_locally(results, output_dir):
+    output_file = os.path.join(output_dir, "parsed_results.json")
+    with open(output_file, 'w') as file:
+        json.dump(results, file, indent=4)
+    print(f"Results saved locally to {output_file}")
 
 def save_to_mongo(results):
     collection = get_mongo_collection()
@@ -90,15 +105,15 @@ def save_to_mongo(results):
         if not existing_result:
             collection.insert_one(result)
         else:
-            if existing_result.get("age") == "new":
-                collection.update_one(
-                    {"_id": existing_result["_id"]},
-                    {"$set": {"age": ""}},
-                    upsert=True
-                )
+            age_value = existing_result.get("age", "")
+            if age_value == "new":
+                age_value = ""
             collection.update_one(
                 {"_id": existing_result["_id"]},
-                {"$setOnInsert": result},
+                {"$set": {
+                    "age": age_value,
+                    "status": existing_result.get("status", "Open")
+                }},
                 upsert=True
             )
 
@@ -121,9 +136,24 @@ def network_scan(domain, output_dir, config):
     nmap_output = run_nmap(dnsx_output, ports, output_dir)
     print(f"Nmap results saved to {nmap_output}")
     
+    print(f"Parsing Nmap results from {nmap_output}...")
     results = parse_nmap_output(nmap_output)
     print(f"Parsed {len(results)} results from Nmap")
+    
+    print(f"Saving results locally for debugging...")
+    save_results_locally(results, output_dir)
     
     print(f"Saving Nmap results to MongoDB for {domain}...")
     save_to_mongo(results)
     print(f"Nmap results saved to MongoDB")
+
+if __name__ == "__main__":
+    config_file_path = 'config.json'
+    with open(config_file_path) as config_file:
+        config = json.load(config_file)
+
+    domain = "nykaaman.com"  # Example domain
+    output_dir = os.path.join(os.getcwd(), "Recon")
+    os.makedirs(output_dir, exist_ok=True)
+
+    network_scan(domain, output_dir, config)
