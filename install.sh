@@ -101,6 +101,7 @@ install_dnsx() {
 install_masscan() {
     echo "Installing masscan..."
     sudo apt-get install -y masscan &> /dev/null
+    sudo setcap cap_net_raw=eip $(which masscan)
 }
 
 # Function to install nmap
