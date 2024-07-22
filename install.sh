@@ -1,8 +1,31 @@
 #!/bin/bash
 
+# Function to check if a command exists
+command_exists() {
+    command -v "$1" &> /dev/null
+}
+
 # Check if Go is installed
-if ! command -v go &> /dev/null; then
+if ! command_exists go; then
     echo "Go is not installed. Please install Go and run this script again."
+    exit 1
+fi
+
+# Check if Python 3 is installed
+if ! command_exists python3; then
+    echo "Python 3 is not installed. Please install Python 3 and run this script again."
+    exit 1
+fi
+
+# Check if Docker is installed
+if ! command_exists docker; then
+    echo "Docker is not installed. Please install Docker and run this script again."
+    exit 1
+fi
+
+# Check if Docker Compose is installed
+if ! command_exists docker compose; then
+    echo "Docker Compose is not installed. Please install Docker Compose and run this script again."
     exit 1
 fi
 
@@ -33,13 +56,31 @@ install_nuclei() {
 install_gotator() {
     echo "Installing gotator..."
     GO111MODULE=on go install github.com/Josue87/gotator@latest &> /dev/null
-    wget -O Recon/ https://gist.githubusercontent.com/six2dez/ffc2b14d283e8f8eff6ac83e20a3c4b4/raw/8f9fa10e35ddc5f3ef4496b72da5c5cad3f230bf/permutations_list.txt &> /dev/null
+    wget -O ~/Recon/permutations_list.txt https://gist.githubusercontent.com/six2dez/ffc2b14d283e8f8eff6ac83e20a3c4b4/raw/8f9fa10e35ddc5f3ef4496b72da5c5cad3f230bf/permutations_list.txt &> /dev/null
 }
 
 # Function to install amass
 install_amass() {
     echo "Installing amass..."
     GO111MODULE=on go install github.com/owasp-amass/amass/v4/...@master &> /dev/null
+}
+
+# Function to install dnsx
+install_dnsx() {
+    echo "Installing dnsx..."
+    GO111MODULE=on go install -v github.com/projectdiscovery/dnsx/cmd/dnsx@latest &> /dev/null
+}
+
+# Function to install masscan
+install_masscan() {
+    echo "Installing masscan..."
+    sudo apt-get install -y masscan &> /dev/null
+}
+
+# Function to install nmap
+install_nmap() {
+    echo "Installing nmap..."
+    sudo apt-get install -y nmap &> /dev/null
 }
 
 # Function to clone additional nuclei template repositories
@@ -108,7 +149,10 @@ install_tools() {
     install_nuclei
     install_gotator
     install_amass
-    clone_additional_templates
+    install_dnsx
+    install_masscan
+    install_nmap
+#    clone_additional_templates
 
     echo "Installation completed."
 }
