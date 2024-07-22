@@ -17,6 +17,12 @@ if ! command_exists python3; then
     exit 1
 fi
 
+# Check if Pip3 is installed
+if ! command_exists pip3; then
+    echo "Pip3 is not installed. Please install Pip3 and run this script again."
+    exit 1
+fi
+
 # Check if Docker is installed
 if ! command_exists docker; then
     echo "Docker is not installed. Please install Docker and run this script again."
@@ -77,6 +83,12 @@ install_masscan() {
     git clone https://github.com/trufflesecurity/trufflehog.git
     cd trufflehog; go install; cd ../;
     rm -r trufflehog;
+}
+
+# Function to install porch-pirate
+install_masscan() {
+    echo "Installing porch-pirate..."
+    sudo pip3 install porch-pirate;
 }
 
 # Function to install dnsx
