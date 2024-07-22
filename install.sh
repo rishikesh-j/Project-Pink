@@ -56,13 +56,19 @@ install_nuclei() {
 install_gotator() {
     echo "Installing gotator..."
     GO111MODULE=on go install github.com/Josue87/gotator@latest &> /dev/null
-    wget -O ~/Recon/permutations_list.txt https://gist.githubusercontent.com/six2dez/ffc2b14d283e8f8eff6ac83e20a3c4b4/raw/8f9fa10e35ddc5f3ef4496b72da5c5cad3f230bf/permutations_list.txt &> /dev/null
+    wget -O Recon/permutations_list.txt https://gist.githubusercontent.com/six2dez/ffc2b14d283e8f8eff6ac83e20a3c4b4/raw/8f9fa10e35ddc5f3ef4496b72da5c5cad3f230bf/permutations_list.txt &> /dev/null
 }
 
 # Function to install amass
 install_amass() {
     echo "Installing amass..."
     GO111MODULE=on go install github.com/owasp-amass/amass/v4/...@master &> /dev/null
+}
+
+# Function to install dnstwist
+install_masscan() {
+    echo "Installing dnstwist..."
+    sudo apt install dnstwist &> /dev/null
 }
 
 # Function to install dnsx
