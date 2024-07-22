@@ -71,6 +71,14 @@ install_masscan() {
     sudo apt install dnstwist &> /dev/null
 }
 
+# Function to install trufflehog
+install_masscan() {
+    echo "Installing trufflehog..."
+    git clone https://github.com/trufflesecurity/trufflehog.git
+    cd trufflehog; go install; cd ../;
+    rm -r trufflehog;
+}
+
 # Function to install dnsx
 install_dnsx() {
     echo "Installing dnsx..."
