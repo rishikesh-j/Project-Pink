@@ -2,7 +2,8 @@ import os
 import json
 import argparse
 from datetime import datetime
-from modules import sub_enum, vuln_scan, shodan_module, phishing, postman_leaks, github_leaks, network_scan
+from modules import sub_enum, vuln_scan, shodan_module, phishing, postman_leaks, github_leaks, network_scan, google_dork
+
 
 def create_output_directory():
     output_dir = os.path.join(os.getcwd(), "Recon")
@@ -59,6 +60,10 @@ def process_domain(domain, organization, output_dir, config, github_org=None):
         print(f"Running GitHub Leaks Scan for organization {github_org}...")
         github_leaks.github_leaks(github_org, output_dir)
         print(f"GitHub leaks results saved to the database")
+
+    print(f"Running Google Dorking for {domain}...")
+    google_dork.run_google_dorks(domain)
+    print(f"Google Dorking results saved to the database")
 
     print(f"Running Network Scan for {domain}...")
     network_scan.network_scan(domain, output_dir, config)
