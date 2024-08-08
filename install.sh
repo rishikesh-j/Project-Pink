@@ -53,7 +53,8 @@ install_nuclei() {
     GO111MODULE=on go install -v github.com/projectdiscovery/nuclei/v2/cmd/nuclei@latest &> /dev/null
     NUCLEI_TEMPLATES_PATH=~/nuclei-templates
     git clone https://github.com/projectdiscovery/nuclei-templates $NUCLEI_TEMPLATES_PATH &> /dev/null
-    git clone https://github.com/geeknik/the-nuclei-templates.git $NUCLEI_TEMPLATES_PATH/extra_templates &> /dev/null
+    git clone https://github.com/rishikesh-j/Nuclei-Templates-Scrapped.git /tmp/nuclei-templates && cp -r /tmp/nuclei-templates/templates/* $NUCLEI_TEMPLATES_PATH/extra_templates && rm -rf /tmp/nuclei-templates
+ &> /dev/null
     git clone https://github.com/projectdiscovery/fuzzing-templates ~/fuzzing-templates &> /dev/null
     nuclei -update-templates -update-template-dir $NUCLEI_TEMPLATES_PATH &> /dev/null
 }
