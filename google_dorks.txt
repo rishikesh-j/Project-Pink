@@ -1,0 +1,25 @@
+Admin Panel :: site:{target} inurl:admin
+WP Admin Panel :: site:{target} inurl:wp-admin
+.git folders :: inurl:"/.git" {target} -github
+Backup files :: site:{target} ext:bkf | ext:bkp | ext:bak | ext:old | ext:backup
+Exposed documents :: site:{target} ext:doc | ext:docx | ext:odt | ext:pdf | ext:rtf | ext:sxw | ext:psw | ext:ppt | ext:pptx | ext:pps | ext:csv | filetype:doc | filetype:docx | filetype:xls | filetype:xlsx | filetype:ppt | filetype:pptx | filetype:mdb | filetype:pdf | filetype:sql | filetype:txt | filetype:rtf | filetype:csv | filetype:xml | filetype:conf | filetype:dat | filetype:ini | filetype:log | index%20of:id_rsa%20id_rsa.pub | filetype:py | filetype:html | filetype:sh | filetype:odt | filetype:key | filetype:sign | filetype:md | filetype:old | filetype:bin | filetype:cer | filetype:crt | filetype:pfx | filetype:crl | filetype:crs | filetype:der
+Confidential documents :: inurl:{target} not for distribution | confidential | "employee only" | proprietary | top secret | classified | trade secret | internal | private filetype:xls OR filetype:csv OR filetype:doc OR filetype:pdf
+Config files :: site:{target} ext:xml | ext:conf | ext:cnf | ext:reg | ext:inf | ext:rdp | ext:cfg | ext:txt | ext:ora | ext:env | ext:ini
+Database files :: site:{target} ext:sql | ext:dbf | ext:mdb
+Other files :: site:{target} intitle:index.of | ext:log | ext:php intitle:phpinfo "published by the PHP Group" | inurl:shell | inurl:backdoor | inurl:wso | inurl:cmd | shadow | passwd | boot.ini | inurl:backdoor | inurl:readme | inurl:license | inurl:install | inurl:setup | inurl:config | inurl:"/phpinfo.php" | inurl:".htaccess" | ext:swf
+SQL errors :: site:{target} intext:"sql syntax near" | intext:"syntax error has occurred" | intext:"incorrect syntax near" | intext:"unexpected end of SQL command" | intext:"Warning: mysql_connect()" | intext:"Warning: mysql_query()" | intext:"Warning: pg_connect()"
+PHP errors :: site:{target} "PHP Parse error" | "PHP Warning" | "PHP Error"
+Wordpress files :: site:{target} inurl:wp-content | inurl:wp-includes
+Project Management sites :: site:trello.com | site:*.atlassian.net "{target}"
+Path traversal :: "{target}" intitle:%22index%20of%22%20%22parent%20directory%22 | intitle:%22index%20of%22%20%22DCIM%22 | intitle:%22index%20of%22%20%22ftp%22 | intitle:%22index%20of%22%20%22backup%22 | intitle:%22index%20of%22%20%22mail%22 | intitle:%22index%20of%22%20%22password%22 | intitle:%22index%20of%22%20%22pub%22 | intitle:%22index%20of%22%20%22.git%22
+GitLab/GitHub/Bitbucket :: site:github.com | site:gitlab.com | site:bitbucket.org "{target}"
+Cloud Buckets S3/GCP :: site:.s3.amazonaws.com | site:storage.googleapis.com | site:amazonaws.com "{target}"
+Traefik :: intitle:traefik inurl:8080/dashboard "{target}"
+Jenkins :: intitle:"Dashboard [Jenkins]" "{target}"
+Login pages :: site:{target} inurl:signup | inurl:register | intitle:Signup | inurl:admin | inurl:login | inurl:adminlogin | inurl:cplogin | inurl:weblogin | inurl:quicklogin | inurl:wp-admin | inurl:wp-login | inurl:portal | inurl:userportal | inurl:loginpanel | inurl:memberlogin | inurl:remote | inurl:dashboard | inurl:auth | inurl:exchange | inurl:ForgotPassword | inurl:test
+Open redirects :: site:{target} inurl:redir | inurl:url | inurl:redirect | inurl:return | inurl:src=http | inurl:r=http
+Code Share Sites :: site:sharecode.io | site:controlc.com | site:codepad.co | site:ideone.com | site:codebeautify.org | site:jsdelivr.com | site:codeshare.io | site:codepen.io | site:repl.it | site:jsfiddle.net "{target}"
+Other 3rd Parties Sites :: site:gitter.im | site:papaly.com | site:productforums.google.com | site:coggle.it | site:replt.it | site:ycombinator.com | site:libraries.io | site:npm.runkit.com | site:npmjs.com | site:scribd.com "{target}"
+Stackoverflow :: site:stackoverflow.com "{target}"
+Paste Sites :: site:justpaste.it | site:heypasteit.com | site:pastebin.com "{target}"
+Apache Struts RCE :: site:{target} ext:action | ext:struts | ext:do
