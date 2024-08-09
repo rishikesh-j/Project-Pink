@@ -73,13 +73,13 @@ install_amass() {
 }
 
 # Function to install dnstwist
-install_masscan() {
+install_dnstwist() {
     echo "Installing dnstwist..."
     sudo apt install dnstwist &> /dev/null
 }
 
 # Function to install trufflehog
-install_masscan() {
+install_trufflehog() {
     echo "Installing trufflehog..."
     git clone https://github.com/trufflesecurity/trufflehog.git
     cd trufflehog; go install; cd ../;
@@ -87,9 +87,16 @@ install_masscan() {
 }
 
 # Function to install porch-pirate
-install_masscan() {
+install_porch-pirate() {
     echo "Installing porch-pirate..."
     sudo pip3 install porch-pirate;
+}
+
+# Function to install pip dependency
+install_pydependency() {
+    echo "Installing Python Dependencies..."
+    pip3 install shodan &> /dev/null
+    pip3 install pymongo &> /dev/null
 }
 
 # Function to install dnsx
@@ -177,6 +184,10 @@ install_tools() {
     install_nuclei
     install_gotator
     install_amass
+    install_dnstwist
+    install_trufflehog
+    install_porch-pirate
+    install_pydependency
     install_dnsx
     install_masscan
     install_nmap
