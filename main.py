@@ -3,7 +3,7 @@ import json
 import argparse
 from datetime import datetime
 from modules import sub_enum, vuln_scan, shodan_module, phishing, postman_leaks, github_leaks, network_scan, google_dork
-
+from utils.mongo_utils import save_to_mongo  # Import the mongo_utils module
 
 def create_output_directory():
     output_dir = os.path.join(os.getcwd(), "Recon")
@@ -37,8 +37,6 @@ def process_domain(domain, organization, output_dir, config, github_org=None):
         with open(gotator_output) as infile:
             outfile.write(infile.read())
     print(f"Final subdomains file saved to {final_subdomains_file}")
-
-    sub_enum.save_to_mongo(domain, final_subdomains_file, collection="subdomains")
 
     print(f"Running Subdomain Verification for {domain}...")
     httpx_output = sub_enum.run_httpx(domain, final_subdomains_file, output_dir, httpx_threads, httpx_rate_limit)
