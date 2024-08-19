@@ -1,15 +1,8 @@
 import subprocess
 import os
 import re
-import pymongo
 from datetime import datetime
-
-def get_mongo_collection():
-    client = pymongo.MongoClient("mongodb://localhost:27017/")
-    db = client["recon"]
-    subdomains_collection = db["subdomains"]
-    verified_subdomains_collection = db["verified_subdomains"]
-    return subdomains_collection, verified_subdomains_collection
+from utils.mongo_utils import save_to_mongo
 
 def run_subfinder(domain, output_dir, threads):
     output_file = os.path.join(output_dir, f"{domain}_subfinder.txt")
@@ -47,7 +40,7 @@ def run_httpx(domain, input_file, output_dir, threads, rate_limit):
         '-status-code',
         '-tech-detect'
     ], check=True)
-    save_to_mongo(domain, output_file, collection="verified_subdomains")
+    save_to_mongo_httpx(domain, output_file, collection_name="verified_subdomains")
 
     clean_output_file = os.path.join(output_dir, f"{domain}_httpx_clean.txt")
     with open(output_file, 'r') as infile, open(clean_output_file, 'w') as outfile:
@@ -59,10 +52,22 @@ def run_httpx(domain, input_file, output_dir, threads, rate_limit):
 
     return clean_output_file
 
-def save_to_mongo(domain, output_file, collection):
-    subdomains_collection, verified_subdomains_collection = get_mongo_collection()
-    collection = subdomains_collection if collection == "subdomains" else verified_subdomains_collection
-    
+def save_to_mongo_subdomains(domain, output_file):
+    with open(output_file, 'r') as file:
+        for line in file:
+            subdomain = line.strip()
+            if not subdomain:
+                continue
+            unique_fields = {"domain": domain, "subdomain": subdomain}
+            data = {
+                "domain": domain,
+                "subdomain": subdomain,
+                "date_found": datetime.now().strftime("%d-%m-%Y"),
+                "status": "Open",
+            }
+            save_to_mongo("subdomains", unique_fields, data)
+
+def save_to_mongo_httpx(domain, output_file, collection_name):
     with open(output_file, 'r') as file:
         for line in file:
             line = remove_color_codes(line).strip()
@@ -72,21 +77,12 @@ def save_to_mongo(domain, output_file, collection):
                 status_code = parts[1].strip('[]')
                 tech = parts[2].strip('[]')
                 
-                existing_entry = collection.find_one({"domain": domain, "subdomain": subdomain})
-                if existing_entry:
-                    new_age = existing_entry.get("age", "")
-                    if new_age == "new":
-                        new_age = ""
-                    collection.update_one(
-                        {"_id": existing_entry["_id"]},
-                        {"$set": {"status_code": status_code, "tech": tech, "age": new_age}}
-                    )
-                else:
-                    collection.insert_one({
-                        "domain": domain,
-                        "subdomain": subdomain,
-                        "status_code": status_code,
-                        "tech": tech,
-                        "date_found": datetime.now().strftime("%d-%m-%Y"),
-                        "age": "new"
-                    })
+                unique_fields = {"domain": domain, "subdomain": subdomain}
+                data = {
+                    "domain": domain,
+                    "subdomain": subdomain,
+                    "status_code": status_code,
+                    "tech": tech,
+                    "date_found": datetime.now().strftime("%d-%m-%Y"),
+                }
+                save_to_mongo(collection_name, unique_fields, data)

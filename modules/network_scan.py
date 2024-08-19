@@ -2,15 +2,9 @@ import subprocess
 import os
 import re
 import json
-import pymongo
 from datetime import datetime
+from utils.mongo_utils import save_to_mongo
 import xml.etree.ElementTree as ET
-
-def get_mongo_collection():
-    client = pymongo.MongoClient("mongodb://localhost:27017/")
-    db = client["recon"]
-    collection = db["network_scan_results"]
-    return collection
 
 def run_dnsx(input_file, output_dir, threads):
     dnsx_output_file = os.path.join(output_dir, "dnsx.txt")
@@ -80,7 +74,6 @@ def parse_nmap_output(nmap_output_file):
                 "service_name": service_name,
                 "product": product,
                 "date_found": datetime.now().strftime("%d-%m-%y"),
-                "age": "new",
                 "status": "Open"  # Default status
             })
 
@@ -92,30 +85,16 @@ def save_results_locally(results, output_dir):
         json.dump(results, file, indent=4)
     print(f"Results saved locally to {output_file}")
 
-def save_to_mongo(results):
-    collection = get_mongo_collection()
+def save_to_mongo_network_scan(results):
     for result in results:
-        existing_result = collection.find_one({
+        unique_fields = {
             "ip_address": result['ip_address'],
             "protocol": result['protocol'],
             "port": result['port'],
             "service_name": result['service_name'],
             "product": result['product']
-        })
-        if not existing_result:
-            collection.insert_one(result)
-        else:
-            age_value = existing_result.get("age", "")
-            if age_value == "new":
-                age_value = ""
-            collection.update_one(
-                {"_id": existing_result["_id"]},
-                {"$set": {
-                    "age": age_value,
-                    "status": existing_result.get("status", "Open")
-                }},
-                upsert=True
-            )
+        }
+        save_to_mongo("network_scan_results", unique_fields, result)
 
 def network_scan(domain, output_dir, config):
     input_file = os.path.join(output_dir, f"{domain}_final_subdomains.txt")
@@ -144,7 +123,7 @@ def network_scan(domain, output_dir, config):
     save_results_locally(results, output_dir)
     
     print(f"Saving Nmap results to MongoDB for {domain}...")
-    save_to_mongo(results)
+    save_to_mongo_network_scan(results)
     print(f"Nmap results saved to MongoDB")
 
 if __name__ == "__main__":

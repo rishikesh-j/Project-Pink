@@ -1,13 +1,7 @@
 import subprocess
 import os
-import pymongo
 from datetime import datetime
-
-def get_mongo_collection():
-    client = pymongo.MongoClient("mongodb://localhost:27017/")
-    db = client["recon"]
-    collection = db["vulnerabilities"]
-    return collection
+from utils.mongo_utils import save_to_mongo
 
 def run_nuclei(target_file, output_dir, rate_limit, threads):
     templates_path = os.path.expanduser("~/nuclei-templates")
@@ -36,7 +30,7 @@ def run_nuclei(target_file, output_dir, rate_limit, threads):
                 all_file.write(result_file.read())
     
     remove_duplicates(all_results_file)
-    save_to_mongo(target_file, all_results_file)
+    save_to_mongo_vuln(target_file, all_results_file)
     return all_results_file
 
 def remove_duplicates(file_path):
@@ -48,14 +42,9 @@ def remove_duplicates(file_path):
                 seen.add(line)
     os.rename(f"{file_path}_nodups", file_path)
 
-def save_to_mongo(target_file, output_file):
-    collection = get_mongo_collection()
-    seen_lines = set()
+def save_to_mongo_vuln(target_file, output_file):
     with open(output_file, 'r') as file:
         for line in file:
-            if line in seen_lines:
-                continue
-            seen_lines.add(line)
             parts = line.strip().split(' ', 4)
             if len(parts) >= 4:
                 vulnerability = parts[0].strip('[]')
@@ -64,29 +53,19 @@ def save_to_mongo(target_file, output_file):
                 url = parts[3]
                 description = parts[4].strip('[]') if len(parts) > 4 else ''
                 
-                existing_entry = collection.find_one({
+                unique_fields = {
                     "vulnerability": vulnerability,
                     "type": vuln_type,
                     "severity": severity,
                     "url": url
-                })
-                if existing_entry:
-                    age = existing_entry.get("age", "")
-                    if age == "new":
-                        age = ""
-                    collection.update_one(
-                        {"_id": existing_entry["_id"]},
-                        {"$set": {"description": description, "age": age}}
-                    )
-                else:
-                    collection.insert_one({
-                        "vulnerability": vulnerability,
-                        "type": vuln_type,
-                        "severity": severity,
-                        "url": url,
-                        "description": description,
-                        "status": "Open",
-                        "date_found": datetime.now().strftime("%d-%m-%Y"),
-                        "age": "new"
-                    })
-
+                }
+                data = {
+                    "vulnerability": vulnerability,
+                    "type": vuln_type,
+                    "severity": severity,
+                    "url": url,
+                    "description": description,
+                    "status": "Open",
+                    "date_found": datetime.now().strftime("%d-%m-%Y"),
+                }
+                save_to_mongo("vulnerabilities", unique_fields, data)
