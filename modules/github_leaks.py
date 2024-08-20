@@ -2,8 +2,13 @@ import os
 import re
 from datetime import datetime
 from utils.mongo_utils import save_to_mongo
+from utils.logging_utils import setup_logger
+
+# Set up the logger
+logger = setup_logger(__name__)
 
 def parse_trufflehog_output(file_path):
+    logger.info(f"Parsing TruffleHog output from file: {file_path}")
     with open(file_path, 'r') as file:
         content = file.read()
 
@@ -28,9 +33,11 @@ def parse_trufflehog_output(file_path):
         leak['date_found'] = datetime.now().strftime("%d-%m-%y")
         leaks.append(leak)
 
+    logger.info(f"Found {len(leaks)} leaks in TruffleHog output")
     return leaks
 
 def save_github_leaks(leaks):
+    logger.info(f"Saving {len(leaks)} GitHub leaks to MongoDB")
     for leak in leaks:
         unique_fields = {
             "detector_type": leak['detector_type'],
@@ -44,18 +51,22 @@ def save_github_leaks(leaks):
             "timestamp": leak['timestamp']
         }
         save_to_mongo("github_leaks", unique_fields, leak)
+    logger.info("GitHub leaks saved to MongoDB")
 
 def github_leaks(github_org, output_dir):
     output_file = os.path.join(output_dir, "trufflehog_output.txt")
     command = f"trufflehog github --org={github_org} | grep -E \"(Detector Type:|Decoder Type:|Raw result:|Commit:|Email:|File:|Line:|Repository:|Timestamp:)\" | sed -r 's/\\x1B\\[[0-9;]*[mG]//g' > {output_file}"
+    
+    logger.info(f"Running TruffleHog command: {command}")
     os.system(command)
+    logger.info(f"TruffleHog output saved to {output_file}")
 
     leaks = parse_trufflehog_output(output_file)
     if leaks:
         save_github_leaks(leaks)
-        print("GitHub leaks results saved to the database")
+        logger.info("GitHub leaks results saved to the database")
     else:
-        print("No leaks found")
+        logger.info("No leaks found")
 
 if __name__ == "__main__":
     github_org = "example_org"  # Example GitHub organization
