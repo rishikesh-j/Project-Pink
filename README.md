@@ -1,146 +1,134 @@
-# Project Pink - An Inhouse ASM
+# Project Pink
 
-## Overview
+![Project Pink](https://your-image-url-here)
 
-Project Pink is a comprehensive reconnaissance automation script designed to streamline the process of subdomain enumeration, vulnerability scanning, Shodan dorking, phishing domain detection, Postman leaks detection, and GitHub leaks detection. The script leverages various open-source tools to automate these tasks and stores the results in a MongoDB database.
+## Summary
 
-## Features
+**Project Pink** is an all-in-one automation tool designed for comprehensive reconnaissance, subdomain enumeration, vulnerability scanning, and data extraction. It leverages a multitude of techniques including OSINT, web scraping, Google Dorks, and GitHub Dorks, ensuring that no stone is left unturned during your security assessments.
 
-1. **Subdomain Enumeration**
-   - Uses Subfinder and Gotator for extensive subdomain enumeration.
-   - Verifies subdomains using Httpx.
+Project Pink is built to support a modular architecture, enabling easy integration with other tools and services. This makes it ideal for both individual security researchers and large teams looking to streamline their workflows.
 
-2. **Vulnerability Scanning**
-   - Employs Nuclei to scan verified subdomains for vulnerabilities.
+## 📔 Table of Contents
 
-3. **Shodan Dorking**
-   - Searches Shodan for exposed services and devices associated with the given organization.
-
-4. **Phishing Domain Detection**
-   - Uses Dnstwist to detect potential phishing domains.
-
-5. **Postman Leaks Detection**
-   - Utilizes Porch Pirate to find potential API leaks in Postman collections.
-
-6. **GitHub Leaks Detection**
-   - Leverages TruffleHog to find secrets and sensitive information in GitHub repositories.
-
-## Prerequisites
-
-- Python 3.x
-- MongoDB
-- Go environment
-- Various tools (Subfinder, Gotator, Httpx, Nuclei, Shodan, Dnstwist, Porch Pirate, TruffleHog)
+- [Installation](#installation)
+  - [Using a PC/VPS/VM](#using-a-pcvpsvm)
+- [Usage](#usage)
+  - [TARGET OPTIONS](#target-options)
+  - [MODE OPTIONS](#mode-options)
+  - [GENERAL OPTIONS](#general-options)
+  - [Example Usage](#example-usage)
+- [Modules](#modules)
+  - [GitHub Leaks](#github-leaks)
+  - [Google Dorks](#google-dorks)
+  - [Network Scanning](#network-scanning)
+  - [Phishing](#phishing)
+  - [Postman Leaks](#postman-leaks)
+  - [Shodan](#shodan)
+  - [Subdomain Enumeration](#subdomain-enumeration)
+  - [Vulnerability Scanning](#vulnerability-scanning)
+- [Features](#features)
+- [How to Contribute](#how-to-contribute)
+- [License](#license)
 
 ## Installation
 
-1. **Clone the Repository**
-   ```bash
-   git clone https://github.com/yourusername/Project-Pink.git
-   cd Project-Pink
-   ```
+### Using a PC/VPS/VM
 
-2. **Install Python Dependencies**
-   ```bash
-   pip install -r requirements.txt
-   ```
+> **Prerequisites:** Ensure that Go, Python3, pip3, Docker, and Docker Compose are installed and paths are correctly set.
 
-3. **Install Go and Go Tools**
-   - Follow the installation guide for Go from [golang.org](https://golang.org/doc/install).
-   - Install required Go tools:
-     ```bash
-     go install -v github.com/projectdiscovery/subfinder/v2/cmd/subfinder@latest
-     go install -v github.com/tomnomnom/httprobe@latest
-     ```
+Clone the repository and run the installation script:
 
-4. **Configure MongoDB**
-   - Ensure MongoDB is installed and running.
-   - Update `config.json` with the appropriate MongoDB connection string.
-
-5. **Install and Configure Other Tools**
-   - Install Nuclei, Dnstwist, Porch Pirate, and TruffleHog as per their respective documentation.
-
-## Configuration
-
-Update the `config.json` file with the necessary configurations:
-
-```json
-{
-  "subfinder_threads": 10,
-  "nuclei_rate_limit": 20,
-  "nuclei_threads": 5,
-  "httpx_threads": 10,
-  "httpx_rate_limit": 20,
-  "shodan_api_key": "YOUR_SHODAN_API_KEY"
-}
+```bash
+git clone https://github.com/rishikesh-j/Project-Pink.git
+cd Project-Pink/
+./install.sh
 ```
 
 ## Usage
 
-### General Usage
+### TARGET OPTIONS
+
+| Flag | Description |
+|------|-------------|
+| -t   | Single target domain (e.g., example.com) |
+| -o   | Organization name (required) |
+| -l   | File containing a list of target domains |
+| -g   | GitHub organization name |
+| -s   | Only run Shodan module |
+
+### Example Usage
+
+To perform a full recon on a single target:
 
 ```bash
-python main.py -t <target_domain> -o <organization_name> [-g <github_org>]
+./project-pink.sh -t example.com -o "Example Org"
 ```
 
-### Running Specific Modules
-
-#### Only Shodan Module
+To perform recon on a list of targets:
 
 ```bash
-python main.py -s -o <organization_name>
+./project-pink.sh -l targets.txt -o "Example Org"
 ```
 
-#### Using a List of Domains
+To perform a Shodan scan only:
 
 ```bash
-python main.py -l <list_of_domains.txt> -o <organization_name> [-g <github_org>]
+./project-pink.sh -o "Example Org" -s
 ```
 
 ## Modules
 
+### GitHub Leaks
+
+- **Tool Used:** trufflehog
+- **Description:** Identifies sensitive information in GitHub repositories.
+
+### Google Dorks
+
+- **Tool Used:** Custom Google Dorking
+- **Description:** Automates Google Dorks search for exposed information.
+
+### Network Scanning
+
+- **Tools Used:** dnsx, masscan, nmap
+- **Description:** DNS enumeration and port scanning.
+
+### Phishing
+
+- **Tool Used:** dnstwist
+- **Description:** Scans for phishing domains and permutations.
+
+### Postman Leaks
+
+- **Tool Used:** porch-pirate
+- **Description:** Extracts exposed information from Postman workspaces.
+
+### Shodan
+
+- **Tool Used:** Shodan API
+- **Description:** Performs Shodan searches to identify exposed services and devices.
+
 ### Subdomain Enumeration
 
-- Combines results from Subfinder and Gotator.
-- Verifies subdomains using Httpx.
+- **Tools Used:** subfinder, gotator, httpx
+- **Description:** Enumerates and verifies subdomains using multiple methods.
 
 ### Vulnerability Scanning
 
-- Scans verified subdomains for vulnerabilities using Nuclei.
-- Saves results to MongoDB, avoiding duplicates.
+- **Tool Used:** nuclei
+- **Description:** Scans for known vulnerabilities using predefined templates.
 
-### Shodan Dorking
+## Features
 
-- Searches Shodan for exposed services associated with the organization.
-- Saves results to MongoDB, avoiding duplicates and preserving the status field.
+- Modular design for easy integration and customization.
+- Automatic saving of results to MongoDB for analysis.
+- Extensive use of multi-threading for faster execution.
+- Supports detailed configuration for various modules.
 
-### Phishing Domain Detection
+## How to Contribute
 
-- Uses Dnstwist to detect potential phishing domains.
-- Saves results to MongoDB, avoiding duplicates.
-
-### Postman Leaks Detection
-
-- Uses Porch Pirate to find potential API leaks in Postman collections.
-- Saves results to MongoDB, avoiding duplicates and preserving the status field.
-
-### GitHub Leaks Detection
-
-- Uses TruffleHog to find secrets in GitHub repositories.
-- Saves results to MongoDB, avoiding duplicates and preserving the status field.
-
-## Debugging
-
-For debugging purposes, you can add print statements or use logging to trace issues.
-
-## Contribution
-
-Contributions are welcome! Feel free to open issues or submit pull requests.
+We welcome contributions from the community! Please read our [contributing guide](CONTRIBUTING.md) for more information.
 
 ## License
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
-
----
-
-Happy Reconnaissance! 🎯
+Project Pink is released under the MIT License. See [LICENSE](LICENSE) for more information.
